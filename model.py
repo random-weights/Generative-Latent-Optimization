@@ -65,13 +65,13 @@ with gph.as_default():
                                                  scope = "batch_norm")
             layer = tf.nn.relu(layer,name = "relu")
 
-    gen_image = layer
+    gen_image = gph.get_tensor_by_name("glayer6/relu:0")
     cost = tf.reduce_mean((gen_image - y_true)**2,name = "cost")
     tf.summary.scalar("cost",cost)
 
     train = tf.train.AdamOptimizer(1e-2).minimize(cost,name = "optimizer")
 
-    saver = tf.train.Saver([noise_vector])
+    saver = tf.train.Saver()
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter("checkpoint",graph=tf.get_default_graph())
 
@@ -81,14 +81,12 @@ with tf.Session(graph = gph) as sess:
     sess.run(tf.global_variables_initializer())
 
     for image_index in range(60000):
-        print("\rimage: ".format(image_index)+str(image_index))
+        print("\rimage: ".format(image_index)+str(image_index),end = "")
         feed_dict = {x: get_ohvector(image_index),
                      y_true: next(image_array())}
         _,summary = sess.run([train,merged],feed_dict)
-        if (image_index+1)%1000 == 0:
+        if (image_index+1)%100 == 0:
             writer.add_summary(summary,image_index)
 
     saver.save(sess,"checkpoint/glo")
     print("Training done")
-
-    #code for evaluating the output goes here
