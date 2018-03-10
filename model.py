@@ -7,6 +7,10 @@ X_TRAIN_FNAME = "data/x_train.csv"
 one_hot_length = 60000
 
 def image_array():
+    """
+    get the next image in csv file.
+    :return: an image as numpy array with dims (1,28,28,1)
+    """
     with open(X_TRAIN_FNAME,'r') as fh:
         line = fh.readline().strip("\n")
         pixels = line.split(",")
@@ -14,20 +18,30 @@ def image_array():
         norm_pixels = np.array(norm_pixels).astype(np.float32).reshape(1,28,28,1)
         yield norm_pixels
 
+
 def get_ohvector(index):
+    """
+    :param index: the index of the image in csv file
+    :return: a one hot vector that indicates position of image in csv fie
+    """
     vector = [0]*one_hot_length
     vector[index] = 1
     vector = np.array(vector).reshape(1,one_hot_length)
     return vector
 
+
 gph = tf.Graph()
 with gph.as_default():
+
+    #initializers for weights and biases.
     kern_init = tf.random_normal_initializer(mean = 0.0, stddev = 0.01)
     bias_init = tf.zeros_initializer()
 
     with tf.variable_scope("inputs"):
         y_true = tf.placeholder(tf.float32,shape = [1,28,28,1],name = "y_true")
         x = tf.placeholder(tf.float32, shape = [1,one_hot_length], name = "one_hot_vector")
+
+    #onehot will essentially select a noise vector of the corresponding image.
     with tf.variable_scope("noise_selector"):
         noise_vector = tf.get_variable("noise_1d_vector",shape = [one_hot_length,64])
         noise_selector = tf.matmul(x,noise_vector)
@@ -35,6 +49,7 @@ with gph.as_default():
 
     tf.summary.histogram("noise_vector1d",noise_vector)
 
+    #convolution transpose layers start from here.
     ls_layer_units = [64, 32, 16, 8, 4, 1]
     ls_layer_names = ["glayer" + str(i + 1) for i in range(6)]
     layer = noise_mass
