@@ -1,20 +1,5 @@
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
-
-X_TRAIN_FNAME = "data/x_train.csv"
-
-def image_array(file_handler):
-    """
-    get the next image in csv file.
-    :return: an image as numpy array with dims (1,28,28,1)
-    """
-    while True:
-        line = file_handler.readline().strip("\n")
-        pixels = line.split(",")
-        norm_pixels = [int(pixel)/255.0 for pixel in pixels]
-        norm_pixels = np.array(norm_pixels).astype(np.float32).reshape(1,28,28,1)
-        yield norm_pixels
 
 def get_2d_gaussian(x_dim,sigma):
     """
@@ -50,6 +35,16 @@ def get_2d_gaussian(x_dim,sigma):
         return filter
 
 def laplace_pyramid(image):
+    """
+    :param image: image for which pyramid is needed. Input shape must be 1,28,28,1
+    If using any other size, change the no. of iterations as described below.
+
+    yields a level of pyramid. Since this is dependent on the image size,
+    function has to be modified for images other than MNIST.
+
+    What changes: change the number of for loop iterations that depends on the image dims.
+    """
+
     filt = get_2d_gaussian(3, 1.0)
     with tf.variable_scope("gaussianKernel"):
         gkernel = tf.convert_to_tensor(filt,dtype = tf.float32)
@@ -70,29 +65,18 @@ def laplace_pyramid(image):
             g0 = g1_subsampled
 
 def laplace_loss(img1,img2):
+    """
+    as described in https://arxiv.org/abs/1707.05776
+    :param img1: first image(generally the original image)
+    :param img2: second image(generally the image generated from noise
+    :return: Given two images: img1 and img2, it computes the laplacian pyramid loss
+    """
+
     loss = 0
     lp1 = laplace_pyramid(img1)
     lp2 = laplace_pyramid(img2)
     for i in range(3):
         l1 = next(lp1)
         l2 = next(lp2)
-        loss += tf.reduce_mean(l1-l2)
+        loss += tf.reduce_mean(l1-l2)/4**(i+1)
     return loss
-
-gph = tf.Graph()
-with gph.as_default():
-    x1 = tf.placeholder(tf.float32, shape = [1,28,28,1], name = "img1")
-    x2 = tf.placeholder(tf.float32, shape = [1,28,28,1], name = "img2")
-    cost = laplace_loss(x1,x2)
-
-with tf.Session(graph = gph) as sess:
-    sess.run(tf.global_variables_initializer())
-    sess.run(tf.local_variables_initializer())
-    image = image_array(open(X_TRAIN_FNAME,'r'))
-    feed_dict = {x1:next(image),
-                 x2:next(image)}
-    loss  = sess.run(cost,feed_dict)
-    print(loss)
-    #exp_image = exp_image.reshape(28, 28)
-    #plt.imshow(exp_image,cmap = "binary")
-    #plt.show()
