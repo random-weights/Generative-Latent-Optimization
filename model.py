@@ -1,23 +1,20 @@
 import tensorflow as tf
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 X_TRAIN_FNAME = "data/x_train.csv"
 one_hot_length = 60000
 
-def image_array():
+def image_array(file_handler):
     """
     get the next image in csv file.
     :return: an image as numpy array with dims (1,28,28,1)
     """
-    with open(X_TRAIN_FNAME,'r') as fh:
-        line = fh.readline().strip("\n")
+    while True:
+        line = file_handler.readline().strip("\n")
         pixels = line.split(",")
         norm_pixels = [int(pixel)/255.0 for pixel in pixels]
         norm_pixels = np.array(norm_pixels).astype(np.float32).reshape(1,28,28,1)
         yield norm_pixels
-
 
 def get_ohvector(index):
     """
@@ -75,16 +72,20 @@ with gph.as_default():
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter("checkpoint",graph=tf.get_default_graph())
 
-
 with tf.Session(graph = gph) as sess:
     sess.run(tf.local_variables_initializer())
     sess.run(tf.global_variables_initializer())
 
-    for image_index in range(60000):
+    for image_index in range(2):
         print("\rimage: ".format(image_index)+str(image_index),end = "")
+
+        fh = open(X_TRAIN_FNAME,'r')
+        image = image_array(fh)
+
         feed_dict = {x: get_ohvector(image_index),
-                     y_true: next(image_array())}
+                     y_true: next(image)}
         _,summary = sess.run([train,merged],feed_dict)
+
         if (image_index+1)%100 == 0:
             writer.add_summary(summary,image_index)
 
