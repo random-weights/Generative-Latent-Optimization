@@ -76,10 +76,10 @@ with tf.Session(graph = gph) as sess:
     sess.run(tf.local_variables_initializer())
     sess.run(tf.global_variables_initializer())
 
+    fh = open(X_TRAIN_FNAME, 'r')
     for image_index in range(2):
         print("\rimage: ".format(image_index)+str(image_index),end = "")
 
-        fh = open(X_TRAIN_FNAME,'r')
         image = image_array(fh)
 
         feed_dict = {x: get_ohvector(image_index),
@@ -89,5 +89,6 @@ with tf.Session(graph = gph) as sess:
         if (image_index+1)%100 == 0:
             writer.add_summary(summary,image_index)
 
+    fh.close()
     saver.save(sess,"checkpoint/glo")
     print("Training done")
