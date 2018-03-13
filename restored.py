@@ -55,8 +55,10 @@ saver = tf.train.Saver()
 with tf.Session() as sess:
     saver.restore(sess,"checkpoint/glo")
     print("model restored")
-    sample_index = 64
-    sample_img = sess.run(gen_image,feed_dict={x: get_ohvector(sample_index)})
-    sample_img = sample_img.reshape(28,28)
-    plt.imshow(sample_img)
-    plt.show()
+    for i in range(60000):
+        index = i
+        sample_img = sess.run(gen_image,feed_dict={x: get_ohvector(index)})
+        sample_img = sample_img.reshape(28,28)
+        plt.imshow(sample_img)
+        plt.savefig("images/generated/"+str(index)+".png")
+        print("\rImage: ".format(index)+str(index),end = "")
