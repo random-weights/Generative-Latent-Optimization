@@ -29,11 +29,20 @@ def image():
         yield norm_pixels
 
 def onehot():
+    """
+    get the next onehot array
+    :return: onehot array od dims [1,one_hot_length]
+    """
     indices = range(one_hot_length)
     for index in indices:
         yield index_to_oh(index)
 
 def image_batch(batch_size):
+    """
+    Uses the image generator.
+    :param batch_size: recommended in power 2
+    :return: a numpy array that contains <batch_size> images
+    """
     image_gen = itertools.cycle(image())
     while True:
         image_arr = []
@@ -42,6 +51,11 @@ def image_batch(batch_size):
         yield np.array(image_arr).reshape(batch_size,28,28,1)
 
 def onehot_batch(batch_size):
+    """
+    Uses onehot() generator.
+    :param batch_size: recommended in power of 2
+    :return: a numpy array of <batch_size> one_hot arrays.
+    """
     oh_array = itertools.cycle(onehot())
     while True:
         onehot_batch = []
