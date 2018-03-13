@@ -2,66 +2,70 @@ import tensorflow as tf
 import numpy as np
 import itertools
 
-X_TRAIN_FNAME = "data/x_train.csv"
 one_hot_length = 60000
 
-def index_to_oh(index):
-    """
-    :param index: the index of the image in csv file
-    :return: a one hot vector that indicates position of image in csv fie
-    """
-    vector = [0]*one_hot_length
-    vector[index] = 1
-    vector = np.array(vector).reshape(1,one_hot_length)
-    return vector
 
-def image():
-    """
-    get the next image in csv file.
-    :return: an image as numpy array with dims (1,28,28,1)
-    """
-    fh = open(X_TRAIN_FNAME,'r')
-    for line in fh:
-        line = line.strip("\n")
-        pixels = line.split(",")
-        norm_pixels = [int(pixel)/255.0 for pixel in pixels]
-        norm_pixels = np.array(norm_pixels).astype(np.float32).reshape(1,28,28,1)
-        yield norm_pixels
+class Data():
+    def __init__(self,train_fname):
+        self.X_TRAIN_FNAME = train_fname
 
-def onehot():
-    """
-    get the next onehot array
-    :return: onehot array od dims [1,one_hot_length]
-    """
-    indices = range(one_hot_length)
-    for index in indices:
-        yield index_to_oh(index)
+    def index_to_oh(self,index):
+        """
+        :param index: the index of the image in csv file
+        :return: a one hot vector that indicates position of image in csv fie
+        """
+        vector = [0]*one_hot_length
+        vector[index] = 1
+        vector = np.array(vector).reshape(1,one_hot_length)
+        return vector
 
-def image_batch(batch_size):
-    """
-    Uses the image generator.
-    :param batch_size: recommended in power 2
-    :return: a numpy array that contains <batch_size> images
-    """
-    image_gen = itertools.cycle(image())
-    while True:
-        image_arr = []
-        for _ in range(batch_size):
-            image_arr.append(next(image_gen))
-        yield np.array(image_arr).reshape(batch_size,28,28,1)
+    def image(self):
+        """
+        get the next image in csv file.
+        :return: an image as numpy array with dims (1,28,28,1)
+        """
+        fh = open(self.X_TRAIN_FNAME,'r')
+        for line in fh:
+            line = line.strip("\n")
+            pixels = line.split(",")
+            norm_pixels = [int(pixel)/255.0 for pixel in pixels]
+            norm_pixels = np.array(norm_pixels).astype(np.float32).reshape(1,28,28,1)
+            yield norm_pixels
 
-def onehot_batch(batch_size):
-    """
-    Uses onehot() generator.
-    :param batch_size: recommended in power of 2
-    :return: a numpy array of <batch_size> one_hot arrays.
-    """
-    oh_array = itertools.cycle(onehot())
-    while True:
-        onehot_batch = []
-        for _ in range(batch_size):
-            onehot_batch.append(next(oh_array))
-        yield np.array(onehot_batch).reshape(batch_size,one_hot_length)
+    def onehot(self):
+        """
+        get the next onehot array
+        :return: onehot array od dims [1,one_hot_length]
+        """
+        indices = range(one_hot_length)
+        for index in indices:
+            yield self.index_to_oh(index)
+
+    def image_batch(self,batch_size):
+        """
+        Uses the image generator.
+        :param batch_size: recommended in power 2
+        :return: a numpy array that contains <batch_size> images
+        """
+        image_gen = itertools.cycle(self.image())
+        while True:
+            image_arr = []
+            for _ in range(batch_size):
+                image_arr.append(next(image_gen))
+            yield np.array(image_arr).reshape(batch_size,28,28,1)
+
+    def onehot_batch(self,batch_size):
+        """
+        Uses onehot() generator.
+        :param batch_size: recommended in power of 2
+        :return: a numpy array of <batch_size> one_hot arrays.
+        """
+        oh_array = itertools.cycle(self.onehot())
+        while True:
+            onehot_batch = []
+            for _ in range(batch_size):
+                onehot_batch.append(next(oh_array))
+            yield np.array(onehot_batch).reshape(batch_size,one_hot_length)
 
 
 gph = tf.Graph()
@@ -109,14 +113,14 @@ with gph.as_default():
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter("checkpoint",graph=tf.get_default_graph())
 
-epochs = 100
+epochs = 1000
 
 with tf.Session(graph = gph) as sess:
     sess.run(tf.local_variables_initializer())
     sess.run(tf.global_variables_initializer())
-
-    img_batch_gen = image_batch(batch_size = 32)
-    oh_batch_gen = onehot_batch(batch_size=32)
+    train_data = Data("data/x_train.csv")
+    img_batch_gen = train_data.image_batch(batch_size = 32)
+    oh_batch_gen = train_data.onehot_batch(batch_size=32)
     for epoch in range(epochs):
         print("\rEpoch: ".format(epoch)+str(epoch),end = "")
 
