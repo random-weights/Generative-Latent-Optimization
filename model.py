@@ -77,14 +77,14 @@ with tf.Session(graph = gph) as sess:
     sess.run(tf.global_variables_initializer())
 
     fh = open(X_TRAIN_FNAME, 'r')
-    for image_index in range(2):
+    image = image_array(fh)
+
+    for image_index in range(60000):
         print("\rimage: ".format(image_index)+str(image_index),end = "")
-
-        image = image_array(fh)
-
         feed_dict = {x: get_ohvector(image_index),
                      y_true: next(image)}
-        _,summary = sess.run([train,merged],feed_dict)
+        for _ in range(3):
+            _,summary = sess.run([train,merged],feed_dict)
 
         if (image_index+1)%100 == 0:
             writer.add_summary(summary,image_index)
