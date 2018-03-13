@@ -1,22 +1,11 @@
 import tensorflow as tf
 import numpy as np
+import itertools
 
 X_TRAIN_FNAME = "data/x_train.csv"
 one_hot_length = 60000
 
-def image_array(file_handler):
-    """
-    get the next image in csv file.
-    :return: an image as numpy array with dims (1,28,28,1)
-    """
-    while True:
-        line = file_handler.readline().strip("\n")
-        pixels = line.split(",")
-        norm_pixels = [int(pixel)/255.0 for pixel in pixels]
-        norm_pixels = np.array(norm_pixels).astype(np.float32).reshape(1,28,28,1)
-        yield norm_pixels
-
-def get_ohvector(index):
+def index_to_oh(index):
     """
     :param index: the index of the image in csv file
     :return: a one hot vector that indicates position of image in csv fie
@@ -25,6 +14,40 @@ def get_ohvector(index):
     vector[index] = 1
     vector = np.array(vector).reshape(1,one_hot_length)
     return vector
+
+def image():
+    """
+    get the next image in csv file.
+    :return: an image as numpy array with dims (1,28,28,1)
+    """
+    fh = open(X_TRAIN_FNAME,'r')
+    for line in fh:
+        line = line.strip("\n")
+        pixels = line.split(",")
+        norm_pixels = [int(pixel)/255.0 for pixel in pixels]
+        norm_pixels = np.array(norm_pixels).astype(np.float32).reshape(1,28,28,1)
+        yield norm_pixels
+
+def onehot():
+    indices = range(one_hot_length)
+    for index in indices:
+        yield index_to_oh(index)
+
+def image_batch(batch_size):
+    image_gen = itertools.cycle(image())
+    while True:
+        image_arr = []
+        for _ in range(batch_size):
+            image_arr.append(next(image_gen))
+        yield np.array(image_arr).reshape(batch_size,28,28,1)
+
+def onehot_batch(batch_size):
+    oh_array = itertools.cycle(onehot())
+    while True:
+        onehot_batch = []
+        for _ in range(batch_size):
+            onehot_batch.append(next(oh_array))
+        yield np.array(onehot_batch).reshape(batch_size,one_hot_length)
 
 
 gph = tf.Graph()
@@ -35,14 +58,14 @@ with gph.as_default():
     bias_init = tf.zeros_initializer()
 
     with tf.variable_scope("inputs"):
-        y_true = tf.placeholder(tf.float32,shape = [1,28,28,1],name = "y_true")
-        x = tf.placeholder(tf.float32, shape = [1,one_hot_length], name = "one_hot_vector")
+        y_true = tf.placeholder(tf.float32,shape = [None,28,28,1],name = "y_true")
+        x = tf.placeholder(tf.float32, shape = [None,one_hot_length], name = "one_hot_vector")
 
     #onehot will essentially select a noise vector of the corresponding image.
     with tf.variable_scope("noise_selector"):
         noise_vector = tf.get_variable("noise_1d_vector",shape = [one_hot_length,64])
         noise_selector = tf.matmul(x,noise_vector)
-        noise_mass =tf.reshape(noise_selector,shape = [1,4,4,4],name = "reshaper")
+        noise_mass =tf.reshape(noise_selector,shape = [-1,4,4,4],name = "reshaper")
 
     tf.summary.histogram("noise_vector1d",noise_vector)
 
@@ -72,23 +95,24 @@ with gph.as_default():
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter("checkpoint",graph=tf.get_default_graph())
 
+epochs = 100
+
 with tf.Session(graph = gph) as sess:
     sess.run(tf.local_variables_initializer())
     sess.run(tf.global_variables_initializer())
 
-    fh = open(X_TRAIN_FNAME, 'r')
-    image = image_array(fh)
+    img_batch_gen = image_batch(batch_size = 32)
+    oh_batch_gen = onehot_batch(batch_size=32)
+    for epoch in range(epochs):
+        print("\rEpoch: ".format(epoch)+str(epoch),end = "")
 
-    for image_index in range(60000):
-        print("\rimage: ".format(image_index)+str(image_index),end = "")
-        feed_dict = {x: get_ohvector(image_index),
-                     y_true: next(image)}
-        for _ in range(3):
-            _,summary = sess.run([train,merged],feed_dict)
+        feed_dict = {x: next(oh_batch_gen),
+                     y_true: next(img_batch_gen)}
 
-        if (image_index+1)%100 == 0:
-            writer.add_summary(summary,image_index)
+        _,summary = sess.run([train,merged],feed_dict)
 
-    fh.close()
+        if (epoch+1)%100 == 0:
+            writer.add_summary(summary,epoch)
+
     saver.save(sess,"checkpoint/glo")
     print("Training done")
