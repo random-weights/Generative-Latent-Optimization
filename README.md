@@ -1,12 +1,14 @@
 # OPTIMIZING THE LATENT SPACE REPRESENTATION
 
 This is an implementation of https://arxiv.org/abs/1707.05776. There are two branches in this repository.
+
 master branch: ![equation](https://latex.codecogs.com/gif.latex?\inline&space;$l_2$) as loss function
+
 Laplace branch: Laplacian pyramid loss as loss function.
 
 # Why 2 different loss functions?
 
-According to the paper, $l_2$ loss is supposed to render blurry images from learned noise representations. And laplacian pyramid loss is supposed to generated sharper images. My experience has been the opposite. The generated images through $l_2$ loss are much sharper than Laplacian Pyramid Loss.
+According to the paper, ![equation](https://latex.codecogs.com/gif.latex?\inline&space;$l_2$) loss is supposed to render blurry images from learned noise representations. And laplacian pyramid loss is supposed to generated sharper images. My experience has been the opposite. The generated images through ![equation](https://latex.codecogs.com/gif.latex?\inline&space;$l_2$) loss are much sharper than Laplacian Pyramid Loss.
 
 Before discussing possible reasons, let me explain what Laplacian pyrmaids and how to construct one: 
 ## Laplacian Pyramid:
