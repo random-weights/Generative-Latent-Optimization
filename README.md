@@ -35,12 +35,12 @@ Future commits in Laplace banch will focus on correcting this algorithm. For now
 
 ## Overview:
 A brief overview of how the model woks:
-Each real image from the dataset is paired with a random noise. Lets call this random noise $z_i$ for image $x_i$. For all 60,000 images in the dataset we will have 60,000 pairs of ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;($z_i$,&space;$x_i$)).
+Each real image from the dataset is paired with a random noise. Lets call this random noise ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$Z_i$) for image ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$x_i$). For all 60,000 images in the dataset we will have 60,000 pairs of ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;($z_i$,&space;$x_i$)).
 > From now on let call this 60,000 as n, that is the no. of images in dataset.
 
-Let Z be a vector of dimensions ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$n$,$d$) where d is the size of noise vector. And ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$Z_{n,d}$) contains all n noise vectors. So, the 4th row of $Z$ is the noise vector corresponding to 4th image in the dataset.
+Let **Z** be a vector of dimensions ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$n$,$d$) where d is the size of noise vector. And ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$Z_{n,d}$) contains all n noise vectors. So, the 4th row of **Z** is the noise vector corresponding to 4th image in the dataset.
 
-To select individual noise vectors out of this Z we use a one_hot_vector ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$O_{1,n}$).
+To select individual noise vectors out of this **Z** we use a one_hot_vector ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$O_{1,n}$).
 Let ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$N_i$) be a noise vector corresponding to some image i.
 > ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$N_{1,d}$&space;=&space;$O_{1,n}$&space;x&space;$Z_{n,d}$)
 > where ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$i^{th}$) element in O is 1 and rest are 0. Matrix Multiplication will select ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$i^{th}$)  row from Z.
@@ -51,7 +51,7 @@ The no.of layers to generate image will depend on:
 1. The size of noise vector.
 2. The choice of padding and strides.    
 
-Call this generated image ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$x'$). Calulcate $l_2$ loss between ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$x'$) and ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$x_i$). Using backprop, update the noise vector. 
+Call this generated image ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$x'$). Calulcate ![equation](https://latex.codecogs.com/gif.latex?\inline&space;$l_2$) loss between ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$x'$) and ![Equation](https://latex.codecogs.com/gif.latex?\inline&space;$x_i$). Using backprop, update the noise vector. 
 
 In the initial stages, generated images will be blurry and distorted, but after just 5 or 10 passes through dataset, generated images are sharper and resemble real images from dataset.
 
