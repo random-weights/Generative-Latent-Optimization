@@ -1,0 +1,2 @@
+Run1: 	100000 epochs	batch_size: 64
+Run2: 	1000 epochs	batch_size: 128
