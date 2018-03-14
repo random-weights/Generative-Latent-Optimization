@@ -1,7 +1,7 @@
 # OPTIMIZING THE LATENT SPACE REPRESENTATION
 
 This is an implementation of https://arxiv.org/abs/1707.05776. There are two branches in this repository.
-master branch: $l_2$ as loss function
+master branch: ![equation](https://latex.codecogs.com/gif.latex?\inline&space;$l_2$) as loss function
 Laplace branch: Laplacian pyramid loss as loss function.
 
 # Why 2 different loss functions?
